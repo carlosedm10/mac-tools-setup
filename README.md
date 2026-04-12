@@ -5,8 +5,8 @@ This repo contains a **Mac-only** script that sets up a new development machine 
 The script:
 
 - Installs **Homebrew**
-- Sets up **developer tooling** (Xcode Command Line Tools, Oh My Zsh, Python, UV, Node via `nvm`, CLI packages)
-- Installs your **GUI apps** (Arc, Cursor, Docker, iTerm2, Fathom, Postman, Slack, Tailscale, Telegram, UTM, VLC, WhatsApp, Wireshark, Zoom)
+- Sets up **developer tooling** (Xcode Command Line Tools, Oh My Zsh, Python, UV, Bun, Go, Node via `nvm`, CLI packages)
+- Installs your **GUI apps** (Arc, Blender, Cursor, DBeaver Community, Docker, iTerm2, Fathom, MongoDB Compass, Postman, Slack, Tailscale, Telegram, UTM, VLC, WhatsApp, Wireshark, Zoom)
 - Configures **Cursor** with a curated set of extensions
 - Configures **Git & GitHub SSH**
 
@@ -26,17 +26,22 @@ The script:
   - Xcode Command Line Tools
   - Oh My Zsh
   - Zsh plugins: `zsh-autosuggestions`, `zsh-syntax-highlighting`
-  - Python 3.11
+  - Python (latest stable 3.x via Homebrew `python`)
   - UV (Python package manager)
+  - Bun ([official install script](https://bun.sh))
+  - Go: `go`, plus `golangci-lint`, `delve` (debugger), `staticcheck`, `gopls` (language server); `~/go/bin` is on `PATH` for `go install` tools
+  - Ollama (local LLM runtime; [official install script](https://ollama.com/download))
   - Node.js via `nvm` (if `nvm` is already installed)
   - Brew packages: `git`, `wget`, `curl`, `openssl`, `pnpm`, `htop`, `jq`, `git-lfs`, `pipx`, `poetry`
 - **Applications (via Homebrew casks)**
   - Arc
   - Blender
   - Cursor
+  - DBeaver Community (SQL / database GUI)
   - Docker Desktop
   - Fathom
   - iTerm2
+  - MongoDB Compass (MongoDB GUI)
   - Postman
   - Slack
   - Tailscale

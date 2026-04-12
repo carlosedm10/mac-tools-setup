@@ -94,6 +94,11 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
 
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
+
+export PATH="$PATH:$HOME/go/bin"
+
 export PATH="/opt/homebrew/opt/ruby/bin:$PATH"
 
 # Docker CLI completions
@@ -127,11 +132,33 @@ EOF
     echo "Installing UV (Python package manager)..."
     curl -LsSf https://astral.sh/uv/install.sh | sh
 
-    # 1.6 Python: ensure a recent version is available
-    echo "Ensuring Python 3.11 is installed..."
-    brew install python@3.11
+    # 1.6 Ollama
+    echo "Installing Ollama..."
+    if command -v ollama &>/dev/null; then
+        echo "✅ Ollama already installed."
+    else
+        curl -fsSL https://ollama.com/install.sh | sh
+        echo "✅ Ollama installed."
+    fi
 
-    # 1.7 NVM + Node.js (if nvm is available)
+    # 1.7 Python: latest stable 3.x from Homebrew
+    echo "Installing latest stable Python (Homebrew python formula)..."
+    brew install python
+
+    # 1.8 Bun
+    echo "Installing Bun..."
+    if [ -x "$HOME/.bun/bin/bun" ]; then
+        echo "✅ Bun already installed."
+    else
+        curl -fsSL https://bun.sh/install | bash
+        echo "✅ Bun installed."
+    fi
+
+    # 1.9 Go and common tooling
+    echo "Installing Go (compiler) and tooling: golangci-lint, delve, staticcheck, gopls..."
+    brew install go golangci-lint delve staticcheck gopls
+
+    # 1.10 NVM + Node.js (if nvm is available)
     echo "Configuring Node.js via nvm (if available)..."
     if command -v nvm &>/dev/null; then
         nvm install --lts || echo "⚠️  nvm install failed (continuing)."
@@ -152,9 +179,11 @@ setup_apps() {
         arc
         blender
         cursor
+        dbeaver-community
         docker
         fathom
         iterm2
+        mongodb-compass
         postman
         slack
         tailscale
