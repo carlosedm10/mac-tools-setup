@@ -37,6 +37,13 @@ install_homebrew() {
     else
         echo "✅ Homebrew already installed."
     fi
+
+    # Ensure brew is on PATH for this script run (Apple Silicon or Intel).
+    if [ -x /opt/homebrew/bin/brew ]; then
+        eval "$(/opt/homebrew/bin/brew shellenv)"
+    elif [ -x /usr/local/bin/brew ]; then
+        eval "$(/usr/local/bin/brew shellenv)"
+    fi
 }
 
 # ------------------------------------------------------------------------------
@@ -128,6 +135,10 @@ EOF
     echo "Installing core packages: git, wget, curl, openssl, pnpm, htop, jq, git-lfs, pipx, poetry..."
     brew install git wget curl openssl pnpm htop jq git-lfs pipx poetry
 
+    # 1.4.1 Node.js (includes npm + npx)
+    echo "Installing Node.js (includes npm + npx)..."
+    brew install node
+
     # 1.5 UV
     echo "Installing UV (Python package manager)..."
     curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -165,6 +176,14 @@ EOF
         nvm alias default 'lts/*' || true
     else
         echo "⚠️  nvm not found. Install nvm manually, then re-run this section for Node.js."
+    fi
+
+    # Sanity check: npx should be present after installing node
+    if ! command -v npx &>/dev/null; then
+        echo "❌ npx is still not available on PATH."
+        echo "   Try: restart your terminal, or run: source ~/.zshrc"
+        echo "   Then verify with: npx --version"
+        exit 1
     fi
 }
 
