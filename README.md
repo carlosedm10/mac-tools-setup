@@ -32,7 +32,7 @@ The script:
   - Go: `go`, plus `golangci-lint`, `delve` (debugger), `staticcheck`, `gopls` (language server); `~/go/bin` is on `PATH` for `go install` tools
   - Ollama (local LLM runtime; [official install script](https://ollama.com/download))
   - Node.js via `nvm` (if `nvm` is already installed)
-  - Brew packages: `git`, `wget`, `curl`, `openssl`, `pnpm`, `htop`, `jq`, `git-lfs`, `pipx`, `poetry`
+  - Brew packages: `git`, `wget`, `curl`, `openssl`, `pnpm`, `htop`, `jq`, `git-lfs`, `pipx`, `poetry`, `direnv`
 - **Applications (via Homebrew casks)**
   - Arc
   - Blender
@@ -82,3 +82,49 @@ After it finishes, you should have:
 - Python + Node tooling
 - Cursor with extensions
 - Git/GitHub ready to use
+
+## direnv (Ruby/Rails env vars)
+
+This setup installs `direnv` and wires it into your shell so environment variables are automatically loaded when you `cd` into a project that has an `.envrc`.
+
+### One-time verification (recommended)
+
+Open a **new** terminal (so your shell loads the hook), then run:
+
+```bash
+direnv version
+```
+
+### Rails/Ruby project setup
+
+In the root of your Rails app:
+
+1. Create an `.envrc` (safe defaults you can commit):
+
+```bash
+export RAILS_ENV=development
+export RACK_ENV=development
+export BUNDLE_WITHOUT="production"
+```
+
+2. Put secrets / machine-local values in `.envrc.local` (do not commit):
+
+```bash
+export DATABASE_URL="postgres://localhost:5432/myapp_development"
+export REDIS_URL="redis://localhost:6379/0"
+export SECRET_KEY_BASE="..."
+```
+
+3. Source the local file from `.envrc`:
+
+```bash
+source_env .envrc.local
+```
+
+4. Add `.envrc.local` to your repo’s `.gitignore`, then allow the directory:
+
+```bash
+direnv allow
+```
+
+From then on, `cd`-ing into the app will load vars automatically, and leaving the directory will unload them.

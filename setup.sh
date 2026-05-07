@@ -107,6 +107,8 @@ export PATH="$BUN_INSTALL/bin:$PATH"
 export PATH="$PATH:$HOME/go/bin"
 
 export PATH="/opt/homebrew/opt/ruby/bin:$PATH"
+# RubyGems executables (e.g. rails, bundler) for Homebrew Ruby 4.x
+export PATH="/opt/homebrew/lib/ruby/gems/4.0.0/bin:$PATH"
 
 # Docker CLI completions
 fpath=("$HOME/.docker/completions" $fpath)
@@ -132,8 +134,8 @@ EOF
     fi
 
     # 1.4 Core packages
-    echo "Installing core packages: git, wget, curl, openssl, pnpm, htop, jq, git-lfs, pipx, poetry..."
-    brew install git wget curl openssl pnpm htop jq git-lfs pipx poetry
+    echo "Installing core packages: git, wget, curl, openssl, pnpm, htop, jq, git-lfs, pipx, poetry, direnv..."
+    brew install git wget curl openssl pnpm htop jq git-lfs pipx poetry direnv
 
     # 1.4.1 Node.js (includes npm + npx)
     echo "Installing Node.js (includes npm + npx)..."
@@ -156,7 +158,24 @@ EOF
     echo "Installing latest stable Python (Homebrew python formula)..."
     brew install python
 
-    # 1.8 Bun
+    # 1.8 Ruby + Rails
+    echo "Installing Ruby + Rails..."
+    brew install ruby
+    gem install bundler rails
+
+    # Ensure Rails executable dir is available for this script run, too.
+    ruby_gem_bindir="$(ruby -e 'require \"rubygems\"; puts Gem.bindir')"
+    export PATH="$ruby_gem_bindir:$PATH"
+
+    if ! command -v rails &>/dev/null; then
+        echo "❌ Rails executable not found on PATH after install."
+        echo "   RubyGems bindir detected as: $ruby_gem_bindir"
+        echo "   Try opening a new terminal, then verify with: rails -v"
+        exit 1
+    fi
+    echo "✅ Rails installed: $(rails -v)"
+
+    # 1.9 Bun
     echo "Installing Bun..."
     if [ -x "$HOME/.bun/bin/bun" ]; then
         echo "✅ Bun already installed."
@@ -165,11 +184,11 @@ EOF
         echo "✅ Bun installed."
     fi
 
-    # 1.9 Go and common tooling
+    # 1.10 Go and common tooling
     echo "Installing Go (compiler) and tooling: golangci-lint, delve, staticcheck, gopls..."
     brew install go golangci-lint delve staticcheck gopls
 
-    # 1.10 NVM + Node.js (if nvm is available)
+    # 1.11 NVM + Node.js (if nvm is available)
     echo "Configuring Node.js via nvm (if available)..."
     if command -v nvm &>/dev/null; then
         nvm install --lts || echo "⚠️  nvm install failed (continuing)."
@@ -183,6 +202,61 @@ EOF
         echo "❌ npx is still not available on PATH."
         echo "   Try: restart your terminal, or run: source ~/.zshrc"
         echo "   Then verify with: npx --version"
+        exit 1
+    fi
+}
+
+# ------------------------------------------------------------------------------
+# 1.x direnv (Ruby/Rails friendly env loading)
+# ------------------------------------------------------------------------------
+setup_direnv() {
+    echo "\n=== direnv ==="
+
+    if ! command -v direnv &>/dev/null; then
+        echo "❌ direnv is not installed (expected via Homebrew)."
+        echo "   Try re-running the previous section or run: brew install direnv"
+        exit 1
+    fi
+
+    # Ensure zsh hook exists (script rewrites ~/.zshrc, but keep this idempotent anyway).
+    if [ -f "$HOME/.zshrc" ] && ! grep -q 'direnv hook zsh' "$HOME/.zshrc"; then
+        backup_file "$HOME/.zshrc"
+        cat >> "$HOME/.zshrc" << 'EOF'
+
+# direnv (auto-load .envrc per directory)
+eval "$(direnv hook zsh)"
+EOF
+        echo "✅ Added direnv hook to ~/.zshrc"
+    fi
+
+    # Optional bash hook if user uses bash.
+    if [ -f "$HOME/.bash_profile" ] && ! grep -q 'direnv hook bash' "$HOME/.bash_profile"; then
+        backup_file "$HOME/.bash_profile"
+        cat >> "$HOME/.bash_profile" << 'EOF'
+
+# direnv (auto-load .envrc per directory)
+eval "$(direnv hook bash)"
+EOF
+        echo "✅ Added direnv hook to ~/.bash_profile"
+    fi
+
+    echo "direnv version: $(direnv version)"
+
+    # Non-interactive sanity check: prove an env var is loaded via .envrc
+    local tmp_dir
+    tmp_dir="$(mktemp -d)"
+    echo 'export DIRENV_TEST="works"' > "$tmp_dir/.envrc"
+    direnv allow "$tmp_dir" >/dev/null
+
+    local got
+    got="$(direnv exec "$tmp_dir" bash -lc 'echo "${DIRENV_TEST:-}"')"
+    rm -rf "$tmp_dir"
+
+    if [ "$got" = "works" ]; then
+        echo "✅ direnv sanity check passed."
+    else
+        echo "❌ direnv sanity check failed (expected 'works', got '$got')."
+        echo "   Try opening a new terminal, then run: direnv status"
         exit 1
     fi
 }
@@ -369,6 +443,7 @@ EOF
 final_checklist() {
     echo "\n=== Installation Completed ==="
     echo "✅ Developer tools"
+    echo "✅ direnv installed + shell hook added"
     echo "✅ Applications"
     echo "✅ Terminal + Python configured"
     echo "✅ GitHub & SSH working (if you added the key)"
@@ -382,6 +457,7 @@ final_checklist() {
 common_main() {
     install_homebrew
     setup_dev_tools_and_terminal
+    setup_direnv
     setup_apps
     setup_cursor_extensions
     setup_git_and_github
