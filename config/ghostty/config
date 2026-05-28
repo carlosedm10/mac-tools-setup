@@ -1,0 +1,4 @@
+# mac-tools-setup — Ghostty config
+# Custom themes live in ~/.config/ghostty/themes/
+
+theme = ayu

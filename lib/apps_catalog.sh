@@ -14,7 +14,7 @@ declare -A APP_CATEGORY_CASKS=(
   [internet]="arc tailscale"
   [messaging]="slack telegram whatsapp"
   [video]="blender vlc zoom fathom"
-  [coding]="dbeaver-community docker mongodb-compass postman wireshark utm iterm2"
+  [coding]="dbeaver-community docker mongodb-compass postman wireshark utm ghostty"
 )
 
 apps_step_id() {

@@ -67,7 +67,7 @@ fpath=("$HOME/.docker/completions" $fpath)
 autoload -Uz compinit
 compinit
 
-# iTerm extra binds (optional)
+# Terminal keybinds (Ghostty / other emulators)
 bindkey "^[b" backward-word
 bindkey "^[f" forward-word
 bindkey "^[^?" backward-kill-word

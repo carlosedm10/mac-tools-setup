@@ -25,5 +25,9 @@ step_apps_run() {
     fi
   done
 
+  if [[ "$category" == "coding" ]]; then
+    step_ghostty_run || return 1
+  fi
+
   success "${APP_CATEGORY_LABELS[$category]:-$category} apps installed."
 }

@@ -102,6 +102,8 @@ source "$SCRIPT_DIR/steps/homebrew.sh"
 source "$SCRIPT_DIR/steps/dev_tools.sh"
 # shellcheck source=steps/direnv.sh
 source "$SCRIPT_DIR/steps/direnv.sh"
+# shellcheck source=steps/ghostty.sh
+source "$SCRIPT_DIR/steps/ghostty.sh"
 # shellcheck source=steps/dev_deps.sh
 source "$SCRIPT_DIR/steps/dev_deps.sh"
 # shellcheck source=steps/apps.sh

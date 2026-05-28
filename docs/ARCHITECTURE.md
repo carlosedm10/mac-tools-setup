@@ -48,7 +48,7 @@ Defined in `lib/apps_catalog.sh`:
 | Internet | Arc, Tailscale |
 | Messaging | Slack, Telegram, WhatsApp |
 | Video | Blender, VLC, Zoom, Fathom |
-| Coding & tools | DBeaver, Docker, MongoDB Compass, Postman, Wireshark, UTM, iTerm2 |
+| Coding & tools | DBeaver, Docker, MongoDB Compass, Postman, Wireshark, UTM, Ghostty |
 
 Each category is tracked separately as `apps-internet`, `apps-messaging`, `apps-video`, `apps-coding`.
 
@@ -77,8 +77,8 @@ Execution order (always preserved):
 
 | Step | Module | Key mechanism |
 |------|--------|---------------|
-| `dev-deps` | `steps/dev_deps.sh` | Chains homebrew, dev_tools, direnv |
-| `apps-*` | `steps/apps.sh` | `brew install --cask` per category |
+| `dev-deps` | `steps/dev_deps.sh` | Chains homebrew, dev_tools, direnv, ghostty config |
+| `apps-*` | `steps/apps.sh` | `brew install --cask` per category; coding also syncs Ghostty config |
 | `ide` | `steps/ide.sh` | Cursor cask + `cursor --install-extension` |
 | `github` | `steps/github.sh` + `lib/github_ssh.sh` | `gum input` + SSH key setup |
 
@@ -139,7 +139,10 @@ mac-tools-setup/
 │   ├── homebrew.sh      # internal (dev-deps)
 │   ├── dev_tools.sh     # internal (dev-deps)
 │   ├── direnv.sh        # internal (dev-deps)
+│   ├── ghostty.sh       # internal (dev-deps, apps-coding)
 │   ├── dev_deps.sh
+├── config/
+│   └── ghostty/         # bundled config + themes/ayu → ~/.config/ghostty
 │   ├── apps.sh
 │   ├── ide.sh
 │   └── github.sh

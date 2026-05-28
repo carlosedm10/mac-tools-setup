@@ -40,7 +40,7 @@ Setup is split into modular steps orchestrated by `install`, with shared librari
 | **Internet** | Arc, Tailscale |
 | **Messaging** | Slack, Telegram, WhatsApp |
 | **Video** | Blender, VLC, Zoom, Fathom |
-| **Coding & tools** | DBeaver, Docker Desktop, MongoDB Compass, Postman, Wireshark, UTM, iTerm2 |
+| **Coding & tools** | DBeaver, Docker Desktop, MongoDB Compass, Postman, Wireshark, UTM, Ghostty |
 
 ### IDE
 
