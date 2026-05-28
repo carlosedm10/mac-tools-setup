@@ -1,0 +1,433 @@
+#!/usr/bin/env bash
+# install — Modular macOS development machine setup
+#
+# Usage:
+#   ./install
+#   ./install --fresh
+#   ./install --dry-run
+#   ./install --status
+#
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# shellcheck source=lib/deps.sh
+source "$SCRIPT_DIR/lib/deps.sh"
+ensure_bash4 "$0" "$@"
+
+# shellcheck source=lib/ui.sh
+source "$SCRIPT_DIR/lib/ui.sh"
+# shellcheck source=lib/helpers.sh
+source "$SCRIPT_DIR/lib/helpers.sh"
+# shellcheck source=lib/apps_catalog.sh
+source "$SCRIPT_DIR/lib/apps_catalog.sh"
+
+ALL_STEPS=("dev-deps")
+for _category in "${ALL_APP_CATEGORIES[@]}"; do
+  ALL_STEPS+=("$(apps_step_id "$_category")")
+done
+ALL_STEPS+=("ide" "github")
+unset _category
+
+PICKER_ITEMS=("all" "dev-deps" "apps" "ide" "github")
+
+declare -A STEP_LABELS=(
+  [dev-deps]="Dev deps"
+  [ide]="IDE"
+  [github]="GitHub"
+)
+for _category in "${ALL_APP_CATEGORIES[@]}"; do
+  STEP_LABELS["$(apps_step_id "$_category")"]="$(apps_step_label "$_category")"
+done
+unset _category
+
+declare -A PICKER_LABELS=(
+  [all]="All"
+  [dev-deps]="Dev deps"
+  [apps]="Apps"
+  [ide]="IDE"
+  [github]="GitHub"
+)
+
+DRY_RUN="false"
+FRESH="false"
+SHOW_STATUS="false"
+
+for arg in "$@"; do
+  case "$arg" in
+    --dry-run) DRY_RUN="true" ;;
+    --fresh) FRESH="true" ;;
+    --status) SHOW_STATUS="true" ;;
+    -h|--help)
+      cat <<EOF
+Usage: install [--fresh] [--dry-run] [--status]
+
+Modular macOS setup with gum step picker and completion tracking.
+
+Top-level groups:
+  All        Run every step (dev deps, all app categories, IDE, GitHub)
+  Dev deps   Homebrew, terminal, languages, direnv
+  Apps       GUI apps by category (internet, messaging, video, coding)
+  IDE        Cursor + extensions
+  GitHub     Git config + SSH
+
+Flags:
+  --fresh     Reset completion state; pre-select All
+  --dry-run   Show actions without executing or updating completion
+  --status    Print step completion table and exit
+  -h, --help  Show this help
+
+Completion state: ~/.config/mac-setup/settings.json
+EOF
+      exit 0
+      ;;
+    *)
+      error "Unknown flag: $arg"
+      echo "Run: install --help"
+      exit 1
+      ;;
+  esac
+done
+
+# shellcheck source=lib/settings.sh
+source "$SCRIPT_DIR/lib/settings.sh"
+# shellcheck source=lib/github_ssh.sh
+source "$SCRIPT_DIR/lib/github_ssh.sh"
+# shellcheck source=steps/homebrew.sh
+source "$SCRIPT_DIR/steps/homebrew.sh"
+# shellcheck source=steps/dev_tools.sh
+source "$SCRIPT_DIR/steps/dev_tools.sh"
+# shellcheck source=steps/direnv.sh
+source "$SCRIPT_DIR/steps/direnv.sh"
+# shellcheck source=steps/dev_deps.sh
+source "$SCRIPT_DIR/steps/dev_deps.sh"
+# shellcheck source=steps/apps.sh
+source "$SCRIPT_DIR/steps/apps.sh"
+# shellcheck source=steps/ide.sh
+source "$SCRIPT_DIR/steps/ide.sh"
+# shellcheck source=steps/github.sh
+source "$SCRIPT_DIR/steps/github.sh"
+
+execute() {
+  if [[ "$DRY_RUN" == "true" ]]; then
+    warn "[dry-run] $*"
+  else
+    "$@"
+  fi
+}
+
+_run_step() {
+  local step="$1"
+  local category
+
+  case "$step" in
+    dev-deps) execute step_dev_deps_run ;;
+    ide) execute step_ide_run ;;
+    github) execute step_github_run ;;
+    apps-*)
+      category="${step#apps-}"
+      execute step_apps_run "$category"
+      ;;
+    *)
+      error "Unknown step: $step"
+      return 1
+      ;;
+  esac
+}
+
+_step_in_array() {
+  local needle="$1"
+  shift
+  local item
+  for item in "$@"; do
+    [[ "$item" == "$needle" ]] && return 0
+  done
+  return 1
+}
+
+_all_steps_pending() {
+  local step
+  for step in "${ALL_STEPS[@]}"; do
+    if settings_step_completed "$step"; then
+      return 1
+    fi
+  done
+  return 0
+}
+
+_print_step_status_table() {
+  local step label status
+  reset_status_table
+  for step in "${ALL_STEPS[@]}"; do
+    label="${STEP_LABELS[$step]:-$step}"
+    status="$(settings_step_status "$step")"
+    if [[ "$status" == "done" ]]; then
+      status="${GREEN}done${NC}"
+    else
+      status="${YELLOW}pending${NC}"
+    fi
+    add_status_row "$label|$status"
+  done
+  print_status_table "Step" "Status"
+}
+
+_bootstrap_homebrew_if_needed() {
+  if command -v brew &>/dev/null; then
+    ensure_brew_shellenv
+    return 0
+  fi
+
+  info "Homebrew not found — bootstrapping before interactive setup..."
+  if [[ "$DRY_RUN" == "true" ]]; then
+    warn "[dry-run] would install Homebrew"
+    return 0
+  fi
+
+  step_homebrew_run
+}
+
+_top_level_preselect() {
+  local -a preselect=()
+  local category
+
+  if [[ "$FRESH" == "true" ]] || ! settings_exists || _all_steps_pending; then
+    echo "all"
+    return 0
+  fi
+
+  settings_step_completed "dev-deps" || preselect+=("dev-deps")
+
+  for category in "${ALL_APP_CATEGORIES[@]}"; do
+    if ! settings_step_completed "$(apps_step_id "$category")"; then
+      _step_in_array "apps" "${preselect[@]}" || preselect+=("apps")
+      break
+    fi
+  done
+
+  settings_step_completed "ide" || preselect+=("ide")
+  settings_step_completed "github" || preselect+=("github")
+
+  printf '%s\n' "${preselect[@]}"
+}
+
+_pick_top_level() {
+  local -a preselect=()
+  local -a selected=()
+  local line
+  local valid_count=0
+
+  while IFS= read -r line; do
+    [[ -n "$line" ]] && preselect+=("$line")
+  done < <(_top_level_preselect)
+
+  while IFS= read -r line; do
+    [[ -z "$line" ]] && continue
+    if _step_in_array "$line" "${PICKER_ITEMS[@]}"; then
+      selected+=("$line")
+      valid_count=$((valid_count + 1))
+    fi
+  done < <(gum_select_multi_defaults "Select setup groups to run:" "${preselect[@]}" -- "${PICKER_ITEMS[@]}") || return 1
+
+  if [[ $valid_count -eq 0 ]]; then
+    error "No groups selected."
+    return 1
+  fi
+
+  printf '%s\n' "${selected[@]}"
+}
+
+
+_pick_app_categories() {
+  local -a preselect=()
+  local -a selected=()
+  local -a labels=()
+  local category line
+  local valid_count=0
+
+  for category in "${ALL_APP_CATEGORIES[@]}"; do
+    labels+=("${APP_CATEGORY_LABELS[$category]}")
+    settings_step_completed "$(apps_step_id "$category")" || preselect+=("${APP_CATEGORY_LABELS[$category]}")
+  done
+
+  while IFS= read -r line; do
+    [[ -z "$line" ]] && continue
+    for category in "${ALL_APP_CATEGORIES[@]}"; do
+      if [[ "$line" == "${APP_CATEGORY_LABELS[$category]}" ]]; then
+        selected+=("$category")
+        valid_count=$((valid_count + 1))
+        break
+      fi
+    done
+  done < <(gum_select_multi_defaults "Select app categories:" "${preselect[@]}" -- "${labels[@]}") || return 1
+
+  if [[ $valid_count -eq 0 ]]; then
+    error "No app categories selected."
+    return 1
+  fi
+
+  printf '%s\n' "${selected[@]}"
+}
+
+_resolve_groups_to_steps() {
+  local -a groups=("$@")
+  local -a steps=()
+  local category
+
+  if _step_in_array "all" "${groups[@]}"; then
+    printf '%s\n' "${ALL_STEPS[@]}"
+    return 0
+  fi
+
+  if _step_in_array "dev-deps" "${groups[@]}"; then
+    steps+=("dev-deps")
+  fi
+  if _step_in_array "ide" "${groups[@]}"; then
+    steps+=("ide")
+  fi
+  if _step_in_array "github" "${groups[@]}"; then
+    steps+=("github")
+  fi
+  if _step_in_array "apps" "${groups[@]}"; then
+    while IFS= read -r category; do
+      [[ -n "$category" ]] && steps+=("$(apps_step_id "$category")")
+    done < <(_pick_app_categories) || return 1
+  fi
+
+  if [[ ${#steps[@]} -eq 0 ]]; then
+    error "No steps resolved from selection."
+    return 1
+  fi
+
+  printf '%s\n' "${steps[@]}"
+}
+
+_order_selected_steps() {
+  local -a selected=("$@")
+  local step
+  for step in "${ALL_STEPS[@]}"; do
+    if _step_in_array "$step" "${selected[@]}"; then
+      echo "$step"
+    fi
+  done
+}
+
+main() {
+  echo ""
+  echo -e "${BOLD}mac-tools-setup install${NC}"
+  [[ "$DRY_RUN" == "true" ]] && warn "(dry-run mode — no changes will be made)"
+  echo ""
+
+  _bootstrap_homebrew_if_needed
+
+  if ! install_mac_setup_dependencies; then
+    warn "Could not install orchestration dependencies — install Homebrew and re-run."
+    exit 1
+  fi
+
+  ensure_brew_shellenv
+
+  if [[ "$FRESH" == "true" && "$DRY_RUN" != "true" ]]; then
+    settings_reset_completed
+    success "Completion state reset (--fresh)"
+    echo ""
+  elif [[ "$FRESH" == "true" ]]; then
+    warn "[dry-run] would reset completion state"
+    echo ""
+  fi
+
+  echo ""
+  _print_step_status_table
+  echo ""
+
+  if [[ "$SHOW_STATUS" == "true" ]]; then
+    exit 0
+  fi
+
+  local -a groups=()
+  local -a picked=()
+  local -a ordered=()
+  local step
+
+  while IFS= read -r step; do
+    [[ -n "$step" ]] && groups+=("$step")
+  done < <(_pick_top_level) || exit 1
+
+  while IFS= read -r step; do
+    [[ -n "$step" ]] && picked+=("$step")
+  done < <(_resolve_groups_to_steps "${groups[@]}") || exit 1
+
+  echo ""
+  info "Selected steps:"
+  for step in "${picked[@]}"; do
+    info "  • ${STEP_LABELS[$step]:-$step}"
+  done
+  echo ""
+
+  ensure_gum || exit 1
+  if ! gum confirm "Run the selected setup steps?"; then
+    warn "Cancelled."
+    exit 0
+  fi
+
+  echo ""
+  while IFS= read -r step; do
+    [[ -n "$step" ]] && ordered+=("$step")
+  done < <(_order_selected_steps "${picked[@]}")
+
+  if steps_may_need_sudo "${ordered[@]}"; then
+    sudo_keepalive_start || exit 1
+    trap 'sudo_keepalive_stop' EXIT
+  fi
+
+  local -a ran=()
+  local -a failed=()
+
+  for step in "${ordered[@]}"; do
+    echo ""
+    echo -e "${BOLD}── ${STEP_LABELS[$step]:-$step} ──${NC}"
+    if _run_step "$step"; then
+      ran+=("$step")
+      if [[ "$DRY_RUN" != "true" ]]; then
+        settings_mark_completed "$step"
+      fi
+    else
+      failed+=("$step")
+      error "Step failed: ${STEP_LABELS[$step]:-$step}"
+    fi
+  done
+
+  echo ""
+  echo -e "${BOLD}Summary${NC}"
+  echo ""
+
+  if [[ ${#ran[@]} -gt 0 ]]; then
+    success "Completed this session:"
+    for step in "${ran[@]}"; do
+      success "  • ${STEP_LABELS[$step]:-$step}"
+    done
+  fi
+
+  if [[ ${#failed[@]} -gt 0 ]]; then
+    echo ""
+    error "Failed:"
+    for step in "${failed[@]}"; do
+      error "  • ${STEP_LABELS[$step]:-$step}"
+    done
+  fi
+
+  echo ""
+  _print_step_status_table
+  echo ""
+
+  if [[ ${#failed[@]} -gt 0 ]]; then
+    exit 1
+  fi
+
+  success "Mac setup finished."
+  info "Full Xcode must be installed from the Mac App Store manually."
+  echo ""
+}
+
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  main "$@"
+fi

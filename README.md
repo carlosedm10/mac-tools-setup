@@ -1,60 +1,56 @@
 # Mac setup script
 
-This repo contains a **Mac-only** script that sets up a new development machine with your preferred tools.
+This repo contains a **Mac-only** modular setup tool for a new development machine.
 
-The script:
+The installer groups setup into:
 
-- Installs **Homebrew**
-- Sets up **developer tooling** (Xcode Command Line Tools, Oh My Zsh, Python, UV, Bun, Go, Node via `nvm`, CLI packages)
-- Installs your **GUI apps** (Arc, Blender, Cursor, DBeaver Community, Docker, iTerm2, Fathom, MongoDB Compass, Postman, Slack, Tailscale, Telegram, UTM, VLC, WhatsApp, Wireshark, Zoom)
-- Configures **Cursor** with a curated set of extensions
-- Configures **Git & GitHub SSH**
+- **All** — everything in one go
+- **Dev deps** — Homebrew, terminal, languages, direnv
+- **Apps** — GUI apps by category (internet, messaging, video, coding)
+- **IDE** — Cursor + extensions
+- **GitHub** — Git config + SSH
+
+## Architecture
+
+Setup is split into modular steps orchestrated by `install`, with shared libraries under `lib/` and one file per phase under `steps/`. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for details.
 
 ## Before you run it
 
 - **macOS only**: Do not run this on Windows or Linux.
-- **Your `.zshrc` will be replaced**:
-  - If you already have a `.zshrc`, the script will first copy it to:
-    - `~/Downloads/zshrc_copy.txt`
-  - Then it writes a new `.zshrc` based on the current template (Oh My Zsh, `zsh-autosuggestions`, `zsh-syntax-highlighting`, `nvm`, Docker completions).
+- **Your `.zshrc` will be replaced** (Dev deps step):
+  - If you already have a `.zshrc`, the script first copies it to `~/Downloads/zshrc_copy.txt`
+  - Then it writes a new `.zshrc` based on the current template (Oh My Zsh, `zsh-autosuggestions`, `zsh-syntax-highlighting`, `nvm`, Docker completions)
   - If you want to keep parts of your old setup, copy them back from that file afterwards.
 
 ## What gets installed
 
-- **Homebrew**
-- **Developer tools**
-  - Xcode Command Line Tools
-  - Oh My Zsh
-  - Zsh plugins: `zsh-autosuggestions`, `zsh-syntax-highlighting`
-  - Python (latest stable 3.x via Homebrew `python`)
-  - UV (Python package manager)
-  - Bun ([official install script](https://bun.sh))
-  - Go: `go`, plus `golangci-lint`, `delve` (debugger), `staticcheck`, `gopls` (language server); `~/go/bin` is on `PATH` for `go install` tools
-  - Ollama (local LLM runtime; [official install script](https://ollama.com/download))
-  - Node.js LTS via `nvm` (auto-installed; `~/.zshrc` already wires `NVM_DIR`)
-  - Brew packages: `git`, `wget`, `curl`, `openssl`, `pnpm`, `htop`, `jq`, `git-lfs`, `pipx`, `poetry`, `direnv`
-- **Applications (via Homebrew casks)**
-  - Arc
-  - Blender
-  - Cursor
-  - DBeaver Community (SQL / database GUI)
-  - Docker Desktop
-  - Fathom
-  - iTerm2
-  - MongoDB Compass (MongoDB GUI)
-  - Postman
-  - Slack
-  - Tailscale
-  - Telegram
-  - UTM
-  - VLC
-  - WhatsApp
-  - Wireshark
-  - Zoom
-- **Git & GitHub**
-  - Global name/email
-  - SSH key for GitHub
-  - `~/.ssh/config` entry for `github.com`
+### Dev deps
+
+- Homebrew
+- Xcode Command Line Tools
+- Oh My Zsh + zsh plugins
+- Python, UV, Bun, Go, Ollama, Ruby/Rails, Node (Homebrew + nvm LTS)
+- Brew packages: `git`, `wget`, `curl`, `openssl`, `pnpm`, `htop`, `jq`, `git-lfs`, `pipx`, `poetry`, `direnv`
+- Docker via Colima: `colima`, `docker`, `docker-compose` (starts Colima on first run)
+
+### Apps (pick categories in the installer)
+
+| Category | Apps |
+|----------|------|
+| **Internet** | Arc, Tailscale |
+| **Messaging** | Slack, Telegram, WhatsApp |
+| **Video** | Blender, VLC, Zoom, Fathom |
+| **Coding & tools** | DBeaver, Docker Desktop, MongoDB Compass, Postman, Wireshark, UTM, iTerm2 |
+
+### IDE
+
+- Cursor (Homebrew cask)
+- Curated Cursor extensions (Python, data, infra, GitHub, AI, frontend)
+
+### GitHub
+
+- Global Git name/email
+- SSH key for GitHub + `~/.ssh/config` entry
 
 > Note: Full **Xcode** (the IDE) must be installed separately from the Mac App Store. The script only handles the Command Line Tools.
 
@@ -67,21 +63,26 @@ The script:
    cd mac-tools-setup
    ```
 
-2. **Run the setup script**:
+2. **Run the installer**:
 
    ```bash
-   bash setup.sh
+   ./install
    ```
 
-3. Follow any prompts (e.g. Xcode Command Line Tools GUI installer, Git name/email, GitHub SSH key add).
+3. Use the **gum multi-select** to choose groups (`All`, `Dev deps`, `Apps`, `IDE`, `GitHub`). If you pick **Apps**, a second picker lets you choose categories.
 
-After it finishes, you should have:
+4. Follow any prompts (e.g. Xcode Command Line Tools GUI installer, Git name/email, GitHub SSH key add).
 
-- Your apps installed
-- A configured Zsh shell
-- Python + Node tooling
-- Cursor with extensions
-- Git/GitHub ready to use
+### Flags
+
+| Flag | Behavior |
+|------|----------|
+| *(none)* | Status table + gum picker (pending groups pre-selected) |
+| `--fresh` | Reset completion state; pre-select **All** |
+| `--dry-run` | Show picker and log actions without executing |
+| `--status` | Print step completion table and exit |
+
+Completion state is stored in `~/.config/mac-setup/settings.json`. Re-run `./install` to continue where you left off.
 
 ## direnv (Ruby/Rails env vars)
 
@@ -121,7 +122,7 @@ export SECRET_KEY_BASE="..."
 source_env .envrc.local
 ```
 
-4. Add `.envrc.local` to your repo’s `.gitignore`, then allow the directory:
+4. Add `.envrc.local` to your repo's `.gitignore`, then allow the directory:
 
 ```bash
 direnv allow
