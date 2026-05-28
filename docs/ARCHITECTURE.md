@@ -18,9 +18,9 @@ This repo is a thin orchestration layer for macOS machine setup. Each setup phas
 │  ui.sh       │  │  apps.sh      → GUI casks by category         │
 │  helpers.sh  │  │  ide.sh       → Cursor + extensions           │
 │  settings.sh │  │  github.sh    → git config + SSH              │
-│  apps_catalog│  │  (homebrew, dev_tools, direnv — internal)     │
-│  github_ssh.sh│ └──────────────────────────────────────────────┘
-└──────────────┘
+│  apps_catalog│  │  skills.sh    → agent-skills-template (bunx)  │
+│  github_ssh.sh│ │  (homebrew, dev_tools, direnv, ghostty — int.) │
+└──────────────┘  └──────────────────────────────────────────────┘
 ```
 
 ## Entry Points
@@ -37,18 +37,19 @@ This repo is a thin orchestration layer for macOS machine setup. Each setup phas
 | **Dev deps** | `dev-deps` (Homebrew, Xcode CLT, Oh My Zsh, languages, direnv) |
 | **Apps** | Second gum picker → one or more app categories |
 | **IDE** | `ide` (Cursor cask + extensions) |
+| **Agent skills** | `skills` (`bunx agent-skills-template` install) |
 | **GitHub** | `github` (Git config + SSH) |
 
 ## App Categories
 
 Defined in `lib/apps_catalog.sh`:
 
-| Category | Casks |
-|----------|-------|
-| Internet | Arc, Tailscale |
-| Messaging | Slack, Telegram, WhatsApp |
-| Video | Blender, VLC, Zoom, Fathom |
-| Coding & tools | DBeaver, Docker, MongoDB Compass, Postman, Wireshark, UTM, Ghostty |
+| Category | Casks | Formulae |
+|----------|-------|----------|
+| Internet | Arc, Tailscale | — |
+| Messaging | Slack, Telegram, WhatsApp | — |
+| Video | Blender, VLC, Zoom, Fathom | — |
+| Coding & tools | DBeaver, Docker, MongoDB Compass, Postman, Wireshark, UTM, Ghostty, Claude Code | OpenCode |
 
 Each category is tracked separately as `apps-internet`, `apps-messaging`, `apps-video`, `apps-coding`.
 
@@ -61,7 +62,7 @@ When you run `./install`:
 3. **Sources modules** — `ui.sh` → `helpers.sh` → `apps_catalog.sh` → `settings.sh` → all `steps/*.sh`.
 4. **Installs orchestration deps** — `install_mac_setup_dependencies` (bash, gum, jq).
 5. **Prints status table** — each tracked step shows `done` or `pending`.
-6. **Top-level gum multi-select** — All, Dev deps, Apps, IDE, GitHub.
+6. **Top-level gum multi-select** — All, Dev deps, Apps, IDE, Agent skills, GitHub.
 7. **App category picker** — shown when Apps is selected (skipped when All is selected).
 8. **Confirms** — `gum confirm` before mutations.
 9. **Dispatches** — runs steps in registry order; marks each successful step completed.
@@ -73,13 +74,15 @@ Execution order (always preserved):
 1. `dev-deps`
 2. `apps-internet`, `apps-messaging`, `apps-video`, `apps-coding` (as selected)
 3. `ide`
-4. `github`
+4. `skills`
+5. `github`
 
 | Step | Module | Key mechanism |
 |------|--------|---------------|
 | `dev-deps` | `steps/dev_deps.sh` | Chains homebrew, dev_tools, direnv, ghostty config |
-| `apps-*` | `steps/apps.sh` | `brew install --cask` per category; coding also syncs Ghostty config |
+| `apps-*` | `steps/apps.sh` | Casks + optional formulae per category; coding syncs Ghostty config |
 | `ide` | `steps/ide.sh` | Cursor cask + `cursor --install-extension` |
+| `skills` | `steps/skills.sh` | `bunx agent-skills-template@latest install -y` (gum platform picker) |
 | `github` | `steps/github.sh` + `lib/github_ssh.sh` | `gum input` + SSH key setup |
 
 ## Module Responsibilities
@@ -145,6 +148,7 @@ mac-tools-setup/
 │   └── ghostty/         # bundled config + themes/ayu → ~/.config/ghostty
 │   ├── apps.sh
 │   ├── ide.sh
+│   ├── skills.sh
 │   └── github.sh
 ├── docs/
 │   └── ARCHITECTURE.md

@@ -8,6 +8,7 @@ The installer groups setup into:
 - **Dev deps** — Homebrew, terminal, languages, direnv
 - **Apps** — GUI apps by category (internet, messaging, video, coding)
 - **IDE** — Cursor + extensions
+- **Agent skills** — Cursor / Claude Code / OpenCode skills via `agent-skills-template`
 - **GitHub** — Git config + SSH
 
 ## Architecture
@@ -40,12 +41,18 @@ Setup is split into modular steps orchestrated by `install`, with shared librari
 | **Internet** | Arc, Tailscale |
 | **Messaging** | Slack, Telegram, WhatsApp |
 | **Video** | Blender, VLC, Zoom, Fathom |
-| **Coding & tools** | DBeaver, Docker Desktop, MongoDB Compass, Postman, Wireshark, UTM, Ghostty |
+| **Coding & tools** | DBeaver, Docker Desktop, MongoDB Compass, Postman, Wireshark, UTM, Ghostty, Claude Code, OpenCode |
 
 ### IDE
 
 - Cursor (Homebrew cask)
 - Curated Cursor extensions (Python, data, infra, GitHub, AI, frontend)
+
+### Agent skills
+
+- Interactive platform picker (defaults: Cursor, Claude Code, OpenCode)
+- Runs `bunx agent-skills-template@latest install -y --skills all --mode copy`
+- Requires **Dev deps** (Bun) first
 
 ### GitHub
 

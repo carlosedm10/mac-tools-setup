@@ -14,7 +14,12 @@ declare -A APP_CATEGORY_CASKS=(
   [internet]="arc tailscale"
   [messaging]="slack telegram whatsapp"
   [video]="blender vlc zoom fathom"
-  [coding]="dbeaver-community docker mongodb-compass postman wireshark utm ghostty"
+  [coding]="dbeaver-community docker mongodb-compass postman wireshark utm ghostty claude-code"
+)
+
+# Homebrew formulae (CLI) installed alongside casks per category
+declare -A APP_CATEGORY_FORMULAE=(
+  [coding]="opencode"
 )
 
 apps_step_id() {

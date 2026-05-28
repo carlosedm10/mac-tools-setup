@@ -31,6 +31,7 @@ Top-level groups:
   Dev deps   Homebrew, terminal, languages, direnv
   Apps       GUI apps by category (internet, messaging, video, coding)
   IDE        Cursor + extensions
+  Skills     Agent skills (Cursor, Claude Code, OpenCode, …)
   GitHub     Git config + SSH
 
 Flags:
@@ -69,14 +70,15 @@ ALL_STEPS=("dev-deps")
 for _category in "${ALL_APP_CATEGORIES[@]}"; do
   ALL_STEPS+=("$(apps_step_id "$_category")")
 done
-ALL_STEPS+=("ide" "github")
+ALL_STEPS+=("ide" "skills" "github")
 unset _category
 
-PICKER_ITEMS=("all" "dev-deps" "apps" "ide" "github")
+PICKER_ITEMS=("all" "dev-deps" "apps" "ide" "skills" "github")
 
 declare -A STEP_LABELS=(
   [dev-deps]="Dev deps"
   [ide]="IDE"
+  [skills]="Agent skills"
   [github]="GitHub"
 )
 for _category in "${ALL_APP_CATEGORIES[@]}"; do
@@ -89,6 +91,7 @@ declare -A PICKER_LABELS=(
   [dev-deps]="Dev deps"
   [apps]="Apps"
   [ide]="IDE"
+  [skills]="Agent skills"
   [github]="GitHub"
 )
 
@@ -110,6 +113,8 @@ source "$SCRIPT_DIR/steps/dev_deps.sh"
 source "$SCRIPT_DIR/steps/apps.sh"
 # shellcheck source=steps/ide.sh
 source "$SCRIPT_DIR/steps/ide.sh"
+# shellcheck source=steps/skills.sh
+source "$SCRIPT_DIR/steps/skills.sh"
 # shellcheck source=steps/github.sh
 source "$SCRIPT_DIR/steps/github.sh"
 
@@ -128,6 +133,7 @@ _run_step() {
   case "$step" in
     dev-deps) execute step_dev_deps_run ;;
     ide) execute step_ide_run ;;
+    skills) execute step_skills_run ;;
     github) execute step_github_run ;;
     apps-*)
       category="${step#apps-}"
@@ -195,6 +201,7 @@ _top_level_preselect() {
   done
 
   settings_step_completed "ide" || preselect+=("ide")
+  settings_step_completed "skills" || preselect+=("skills")
   settings_step_completed "github" || preselect+=("github")
 
   printf '%s\n' "${preselect[@]}"
@@ -273,6 +280,9 @@ _resolve_groups_to_steps() {
   fi
   if _step_in_array "ide" "${groups[@]}"; then
     steps+=("ide")
+  fi
+  if _step_in_array "skills" "${groups[@]}"; then
+    steps+=("skills")
   fi
   if _step_in_array "github" "${groups[@]}"; then
     steps+=("github")
