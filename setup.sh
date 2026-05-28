@@ -164,7 +164,7 @@ EOF
     gem install bundler rails
 
     # Ensure Rails executable dir is available for this script run, too.
-    ruby_gem_bindir="$(ruby -e 'require \"rubygems\"; puts Gem.bindir')"
+    ruby_gem_bindir="$(ruby -e 'require "rubygems"; puts Gem.bindir')"
     export PATH="$ruby_gem_bindir:$PATH"
 
     if ! command -v rails &>/dev/null; then
