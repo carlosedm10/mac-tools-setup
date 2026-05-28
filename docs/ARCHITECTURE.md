@@ -35,10 +35,10 @@ This repo is a thin orchestration layer for macOS machine setup. Each setup phas
 |-------|-------------|
 | **All** | Every tracked step |
 | **Dev deps** | `dev-deps` (Homebrew, Xcode CLT, Oh My Zsh, languages, direnv) |
+| **GitHub** | `github` (Git config + SSH) |
 | **Apps** | Second gum picker → one or more app categories |
 | **IDE** | `ide` (Cursor cask + extensions) |
-| **Agent skills** | `skills` (`bunx agent-skills-template` install) |
-| **GitHub** | `github` (Git config + SSH) |
+| **Agent skills** | `skills` (`bunx agent-skills-template` install; runs last) |
 
 ## App Categories
 
@@ -62,7 +62,7 @@ When you run `./install`:
 3. **Sources modules** — `ui.sh` → `helpers.sh` → `apps_catalog.sh` → `settings.sh` → all `steps/*.sh`.
 4. **Installs orchestration deps** — `install_mac_setup_dependencies` (bash, gum, jq).
 5. **Prints status table** — each tracked step shows `done` or `pending`.
-6. **Top-level gum multi-select** — All, Dev deps, Apps, IDE, Agent skills, GitHub.
+6. **Top-level gum multi-select** — All, Dev deps, GitHub, Apps, IDE, Agent skills.
 7. **App category picker** — shown when Apps is selected (skipped when All is selected).
 8. **Confirms** — `gum confirm` before mutations.
 9. **Dispatches** — runs steps in registry order; marks each successful step completed.
@@ -72,10 +72,10 @@ When you run `./install`:
 Execution order (always preserved):
 
 1. `dev-deps`
-2. `apps-internet`, `apps-messaging`, `apps-video`, `apps-coding` (as selected)
-3. `ide`
-4. `skills`
-5. `github`
+2. `github`
+3. `apps-internet`, `apps-messaging`, `apps-video`, `apps-coding` (as selected)
+4. `ide`
+5. `skills`
 
 | Step | Module | Key mechanism |
 |------|--------|---------------|

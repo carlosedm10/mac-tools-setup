@@ -6,10 +6,10 @@ The installer groups setup into:
 
 - **All** — everything in one go
 - **Dev deps** — Homebrew, terminal, languages, direnv
+- **GitHub** — Git config + SSH
 - **Apps** — GUI apps by category (internet, messaging, video, coding)
 - **IDE** — Cursor + extensions
-- **Agent skills** — Cursor / Claude Code / OpenCode skills via `agent-skills-template`
-- **GitHub** — Git config + SSH
+- **Agent skills** — Cursor / Claude Code / OpenCode skills via `agent-skills-template` (last)
 
 ## Architecture
 

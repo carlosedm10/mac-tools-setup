@@ -29,10 +29,10 @@ Modular macOS setup with gum step picker and completion tracking.
 Top-level groups:
   All        Run every step (dev deps, all app categories, IDE, GitHub)
   Dev deps   Homebrew, terminal, languages, direnv
+  GitHub     Git config + SSH
   Apps       GUI apps by category (internet, messaging, video, coding)
   IDE        Cursor + extensions
   Skills     Agent skills (Cursor, Claude Code, OpenCode, …)
-  GitHub     Git config + SSH
 
 Flags:
   --fresh     Reset completion state; pre-select All
@@ -66,14 +66,14 @@ source "$SCRIPT_DIR/lib/helpers.sh"
 # shellcheck source=lib/apps_catalog.sh
 source "$SCRIPT_DIR/lib/apps_catalog.sh"
 
-ALL_STEPS=("dev-deps")
+ALL_STEPS=("dev-deps" "github")
 for _category in "${ALL_APP_CATEGORIES[@]}"; do
   ALL_STEPS+=("$(apps_step_id "$_category")")
 done
-ALL_STEPS+=("ide" "skills" "github")
+ALL_STEPS+=("ide" "skills")
 unset _category
 
-PICKER_ITEMS=("all" "dev-deps" "apps" "ide" "skills" "github")
+PICKER_ITEMS=("all" "dev-deps" "github" "apps" "ide" "skills")
 
 declare -A STEP_LABELS=(
   [dev-deps]="Dev deps"
@@ -192,6 +192,7 @@ _top_level_preselect() {
   fi
 
   settings_step_completed "dev-deps" || preselect+=("dev-deps")
+  settings_step_completed "github" || preselect+=("github")
 
   for category in "${ALL_APP_CATEGORIES[@]}"; do
     if ! settings_step_completed "$(apps_step_id "$category")"; then
@@ -202,7 +203,6 @@ _top_level_preselect() {
 
   settings_step_completed "ide" || preselect+=("ide")
   settings_step_completed "skills" || preselect+=("skills")
-  settings_step_completed "github" || preselect+=("github")
 
   printf '%s\n' "${preselect[@]}"
 }
@@ -278,12 +278,6 @@ _resolve_groups_to_steps() {
   if _step_in_array "dev-deps" "${groups[@]}"; then
     steps+=("dev-deps")
   fi
-  if _step_in_array "ide" "${groups[@]}"; then
-    steps+=("ide")
-  fi
-  if _step_in_array "skills" "${groups[@]}"; then
-    steps+=("skills")
-  fi
   if _step_in_array "github" "${groups[@]}"; then
     steps+=("github")
   fi
@@ -291,6 +285,12 @@ _resolve_groups_to_steps() {
     while IFS= read -r category; do
       [[ -n "$category" ]] && steps+=("$(apps_step_id "$category")")
     done < <(_pick_app_categories) || return 1
+  fi
+  if _step_in_array "ide" "${groups[@]}"; then
+    steps+=("ide")
+  fi
+  if _step_in_array "skills" "${groups[@]}"; then
+    steps+=("skills")
   fi
 
   if [[ ${#steps[@]} -eq 0 ]]; then
