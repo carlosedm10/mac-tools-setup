@@ -31,7 +31,7 @@ The script:
   - Bun ([official install script](https://bun.sh))
   - Go: `go`, plus `golangci-lint`, `delve` (debugger), `staticcheck`, `gopls` (language server); `~/go/bin` is on `PATH` for `go install` tools
   - Ollama (local LLM runtime; [official install script](https://ollama.com/download))
-  - Node.js via `nvm` (if `nvm` is already installed)
+  - Node.js LTS via `nvm` (auto-installed; `~/.zshrc` already wires `NVM_DIR`)
   - Brew packages: `git`, `wget`, `curl`, `openssl`, `pnpm`, `htop`, `jq`, `git-lfs`, `pipx`, `poetry`, `direnv`
 - **Applications (via Homebrew casks)**
   - Arc

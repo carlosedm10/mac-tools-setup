@@ -46,6 +46,32 @@ install_homebrew() {
     fi
 }
 
+# nvm is a shell function (not a binary); install once, then source nvm.sh in this script.
+NVM_VERSION="v0.40.3"
+
+install_nvm() {
+    export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
+
+    if [ -s "$NVM_DIR/nvm.sh" ]; then
+        echo "✅ nvm already installed."
+        return 0
+    fi
+
+    echo "Installing nvm ${NVM_VERSION}..."
+    PROFILE=/dev/null curl -fsSL "https://raw.githubusercontent.com/nvm-sh/nvm/${NVM_VERSION}/install.sh" | bash
+    echo "✅ nvm installed."
+}
+
+load_nvm() {
+    export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
+    if [ ! -s "$NVM_DIR/nvm.sh" ]; then
+        echo "❌ nvm is not installed at $NVM_DIR/nvm.sh"
+        return 1
+    fi
+    # shellcheck disable=SC1091
+    . "$NVM_DIR/nvm.sh"
+}
+
 # ------------------------------------------------------------------------------
 # 1. Developer Tools & Terminal Dependencies
 # ------------------------------------------------------------------------------
@@ -188,14 +214,13 @@ EOF
     echo "Installing Go (compiler) and tooling: golangci-lint, delve, staticcheck, gopls..."
     brew install go golangci-lint delve staticcheck gopls
 
-    # 1.11 NVM + Node.js (if nvm is available)
-    echo "Configuring Node.js via nvm (if available)..."
-    if command -v nvm &>/dev/null; then
-        nvm install --lts || echo "⚠️  nvm install failed (continuing)."
-        nvm alias default 'lts/*' || true
-    else
-        echo "⚠️  nvm not found. Install nvm manually, then re-run this section for Node.js."
-    fi
+    # 1.11 NVM + Node.js LTS (nvm is a shell function; must install + source nvm.sh)
+    echo "Installing and configuring Node.js via nvm..."
+    install_nvm
+    load_nvm
+    nvm install --lts || echo "⚠️  nvm install --lts failed (continuing)."
+    nvm alias default 'lts/*' || true
+    nvm use default || true
 
     # Sanity check: npx should be present after installing node
     if ! command -v npx &>/dev/null; then
