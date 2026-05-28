@@ -271,6 +271,8 @@ EOF
     local tmp_dir
     tmp_dir="$(mktemp -d)"
     echo 'export DIRENV_TEST="works"' > "$tmp_dir/.envrc"
+    # macOS: mktemp returns /var/... but direnv allow stores /private/var/...
+    tmp_dir="$(cd "$tmp_dir" && pwd -P)"
     direnv allow "$tmp_dir" >/dev/null
 
     local got
