@@ -63,22 +63,48 @@ Setup is split into modular steps orchestrated by `install`, with shared librari
 
 ## How to run it
 
-1. **Open Terminal** and clone this repo:
+### 1. Create a workspace and clone this repo
 
-   ```bash
-   git clone <REPO_URL>
-   cd mac-tools-setup
-   ```
+Open **Terminal** (or Ghostty after setup). Use a single parent directory for dev repos — `~/code` is the convention this project and [factorial-dev](https://github.com/factorialco/factorial-dev) expect:
 
-2. **Run the installer**:
+```bash
+mkdir -p ~/code
+cd ~/code
+git clone git@github.com:carlosedm10/mac-tools-setup.git
+cd mac-tools-setup
+```
 
-   ```bash
-   ./install
-   ```
+If you do not use SSH yet, clone over HTTPS and switch to SSH after the **GitHub** install step:
 
-3. Use the **gum multi-select** to choose groups (`All`, `Dev deps`, `Apps`, `IDE`, `GitHub`). If you pick **Apps**, a second picker lets you choose categories.
+```bash
+git clone https://github.com/carlosedm10/mac-tools-setup.git
+cd mac-tools-setup
+```
 
-4. Follow any prompts (e.g. Xcode Command Line Tools GUI installer, Git name/email, GitHub SSH key add).
+### 2. Run the installer
+
+```bash
+./install
+```
+
+Use the **gum multi-select** to choose groups (`All`, `Dev deps`, `Apps`, `IDE`, `GitHub`, `Agent skills`). If you pick **Apps**, a second picker lets you choose categories.
+
+Follow any prompts (e.g. Xcode Command Line Tools GUI installer, Git name/email, GitHub SSH key add).
+
+### 3. (Optional) Factorial local development
+
+After **Dev deps** and **GitHub** (so `git` and SSH work), bootstrap Factorial service repos from the same `~/code` directory:
+
+```bash
+cd ~/code
+git clone git@github.com:factorialco/factorial-dev.git
+cd factorial-dev
+./install
+source ~/.zshrc   # loads the fdev alias
+fdev up
+```
+
+See the [factorial-dev README](https://github.com/factorialco/factorial-dev) for service details and commands.
 
 ### Flags
 
