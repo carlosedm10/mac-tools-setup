@@ -11,8 +11,51 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+DRY_RUN="false"
+FRESH="false"
+SHOW_STATUS="false"
+
+for arg in "$@"; do
+  case "$arg" in
+    --dry-run) DRY_RUN="true" ;;
+    --fresh) FRESH="true" ;;
+    --status) SHOW_STATUS="true" ;;
+    -h|--help)
+      cat <<EOF
+Usage: install [--fresh] [--dry-run] [--status]
+
+Modular macOS setup with gum step picker and completion tracking.
+
+Top-level groups:
+  All        Run every step (dev deps, all app categories, IDE, GitHub)
+  Dev deps   Homebrew, terminal, languages, direnv
+  Apps       GUI apps by category (internet, messaging, video, coding)
+  IDE        Cursor + extensions
+  GitHub     Git config + SSH
+
+Flags:
+  --fresh     Reset completion state; pre-select All
+  --dry-run   Show actions without executing or updating completion
+  --status    Print step completion table and exit
+  -h, --help  Show this help
+
+Completion state: ~/.config/mac-setup/settings.json
+EOF
+      exit 0
+      ;;
+    *)
+      echo "Error: Unknown flag: $arg" >&2
+      echo "Run: install --help" >&2
+      exit 1
+      ;;
+  esac
+done
+
+export INSTALL_DRY_RUN="$DRY_RUN"
+
 # shellcheck source=lib/deps.sh
 source "$SCRIPT_DIR/lib/deps.sh"
+bootstrap_homebrew_if_needed || exit 1
 ensure_bash4 "$0" "$@"
 
 # shellcheck source=lib/ui.sh
@@ -48,46 +91,6 @@ declare -A PICKER_LABELS=(
   [ide]="IDE"
   [github]="GitHub"
 )
-
-DRY_RUN="false"
-FRESH="false"
-SHOW_STATUS="false"
-
-for arg in "$@"; do
-  case "$arg" in
-    --dry-run) DRY_RUN="true" ;;
-    --fresh) FRESH="true" ;;
-    --status) SHOW_STATUS="true" ;;
-    -h|--help)
-      cat <<EOF
-Usage: install [--fresh] [--dry-run] [--status]
-
-Modular macOS setup with gum step picker and completion tracking.
-
-Top-level groups:
-  All        Run every step (dev deps, all app categories, IDE, GitHub)
-  Dev deps   Homebrew, terminal, languages, direnv
-  Apps       GUI apps by category (internet, messaging, video, coding)
-  IDE        Cursor + extensions
-  GitHub     Git config + SSH
-
-Flags:
-  --fresh     Reset completion state; pre-select All
-  --dry-run   Show actions without executing or updating completion
-  --status    Print step completion table and exit
-  -h, --help  Show this help
-
-Completion state: ~/.config/mac-setup/settings.json
-EOF
-      exit 0
-      ;;
-    *)
-      error "Unknown flag: $arg"
-      echo "Run: install --help"
-      exit 1
-      ;;
-  esac
-done
 
 # shellcheck source=lib/settings.sh
 source "$SCRIPT_DIR/lib/settings.sh"
@@ -169,21 +172,6 @@ _print_step_status_table() {
     add_status_row "$label|$status"
   done
   print_status_table "Step" "Status"
-}
-
-_bootstrap_homebrew_if_needed() {
-  if command -v brew &>/dev/null; then
-    ensure_brew_shellenv
-    return 0
-  fi
-
-  info "Homebrew not found — bootstrapping before interactive setup..."
-  if [[ "$DRY_RUN" == "true" ]]; then
-    warn "[dry-run] would install Homebrew"
-    return 0
-  fi
-
-  step_homebrew_run
 }
 
 _top_level_preselect() {
@@ -317,10 +305,13 @@ main() {
   [[ "$DRY_RUN" == "true" ]] && warn "(dry-run mode — no changes will be made)"
   echo ""
 
-  _bootstrap_homebrew_if_needed
+  if ! bootstrap_homebrew_if_needed; then
+    error "Homebrew is required. Fix the install error above and re-run."
+    exit 1
+  fi
 
   if ! install_mac_setup_dependencies; then
-    warn "Could not install orchestration dependencies — install Homebrew and re-run."
+    warn "Could not install orchestration dependencies — re-run install after fixing Homebrew."
     exit 1
   fi
 

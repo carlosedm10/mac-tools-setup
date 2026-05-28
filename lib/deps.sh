@@ -5,7 +5,50 @@
 # Homebrew helpers
 # ============================================================================
 
+brew_shellenv() {
+  if [[ -x /opt/homebrew/bin/brew ]]; then
+    # shellcheck disable=SC1091
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+  elif [[ -x /usr/local/bin/brew ]]; then
+    # shellcheck disable=SC1091
+    eval "$(/usr/local/bin/brew shellenv)"
+  fi
+}
+
+# Install Homebrew when missing (Bash 3.2–safe; runs before ensure_bash4 re-exec).
+# Honors INSTALL_DRY_RUN=true from install.
+bootstrap_homebrew_if_needed() {
+  brew_shellenv
+  if command -v brew &>/dev/null; then
+    return 0
+  fi
+
+  if [[ "${INSTALL_DRY_RUN:-false}" == "true" ]]; then
+    echo "[dry-run] would install Homebrew" >&2
+    return 0
+  fi
+
+  echo "Homebrew not found — installing..." >&2
+  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+  brew_shellenv
+  if ! command -v brew &>/dev/null; then
+    cat >&2 <<'EOF'
+Error: Homebrew installed but brew is not on PATH.
+
+Add Homebrew to your shell profile, then re-run install:
+  eval "$(/opt/homebrew/bin/brew shellenv)"    # Apple Silicon
+  eval "$(/usr/local/bin/brew shellenv)"       # Intel Mac
+EOF
+    return 1
+  fi
+
+  echo "Homebrew installed." >&2
+  return 0
+}
+
 _ensure_brew() {
+  brew_shellenv
   if command -v brew &>/dev/null; then
     return 0
   fi

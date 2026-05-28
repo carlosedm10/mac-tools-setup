@@ -2,12 +2,11 @@
 # Homebrew installation
 
 step_homebrew_run() {
-  info "Installing Homebrew..."
-  if ! command -v brew &>/dev/null; then
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+  info "Homebrew..."
+  if bootstrap_homebrew_if_needed; then
+    success "Homebrew ready."
   else
-    success "Homebrew already installed."
+    error "Homebrew setup failed."
+    return 1
   fi
-
-  ensure_brew_shellenv
 }
