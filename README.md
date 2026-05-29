@@ -20,7 +20,7 @@ Setup is split into modular steps orchestrated by `install`, with shared librari
 - **macOS only**: Do not run this on Windows or Linux.
 - **Your `.zshrc` will be replaced** (Dev deps step):
   - If you already have a `.zshrc`, the script first copies it to `~/Downloads/zshrc_copy.txt`
-  - Then it writes a new `.zshrc` based on the current template (Oh My Zsh, `zsh-autosuggestions`, `zsh-syntax-highlighting`, `nvm`, Docker completions)
+  - Then it writes a new `.zshrc` from `config/zsh/zshrc` (Oh My Zsh, `nvm`, Bun, mise, direnv, Colima/Desktop Docker helpers, `fdev` alias, and more)
   - If you want to keep parts of your old setup, copy them back from that file afterwards.
 
 ## What gets installed
@@ -31,7 +31,7 @@ Setup is split into modular steps orchestrated by `install`, with shared librari
 - Xcode Command Line Tools
 - Oh My Zsh + zsh plugins
 - Python, UV, Bun, Go, Ollama, Ruby/Rails, Node (Homebrew + nvm LTS)
-- Brew packages: `git`, `wget`, `curl`, `openssl`, `pnpm`, `htop`, `jq`, `git-lfs`, `pipx`, `poetry`, `direnv`
+- Brew packages: `git`, `wget`, `curl`, `openssl`, `pnpm`, `htop`, `jq`, `git-lfs`, `pipx`, `poetry`, `direnv`, `mise`
 - Docker via Colima: `colima`, `docker`, `docker-compose` (starts Colima on first run)
 
 ### Apps (pick categories in the installer)

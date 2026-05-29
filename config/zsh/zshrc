@@ -1,0 +1,90 @@
+# Path to Oh My Zsh
+export ZSH="$HOME/.oh-my-zsh"
+export PATH="/opt/homebrew/bin:$PATH"
+
+ZSH_THEME="robbyrussell"
+
+zstyle ':omz:update' mode auto
+zstyle ':omz:update' frequency 7
+
+ENABLE_CORRECTION="true"
+COMPLETION_WAITING_DOTS="true"
+
+plugins=(git zsh-autosuggestions zsh-syntax-highlighting)
+
+source $ZSH/oh-my-zsh.sh
+
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
+
+export PATH="$PATH:$HOME/go/bin"
+
+# Docker CLI completions
+fpath=("$HOME/.docker/completions" $fpath)
+autoload -Uz compinit
+compinit
+
+# Terminal keybinds (Ghostty / iTerm / other emulators)
+bindkey "^[b" backward-word
+bindkey "^[f" forward-word
+bindkey "^[^?" backward-kill-word
+bindkey "^U" kill-whole-line
+
+# uv, cargo, and other tools that install ~/.local/bin/env
+[[ -f "$HOME/.local/bin/env" ]] && . "$HOME/.local/bin/env"
+
+# bun completions
+[[ -s "$HOME/.bun/_bun" ]] && source "$HOME/.bun/_bun"
+
+# OpenCode CLI (Homebrew formula opencode, or manual install under ~/.opencode)
+export PATH="$HOME/.opencode/bin:$PATH"
+
+# Optional personal Factorial helpers (create ~/.factorialrc locally; never commit secrets)
+[[ -f "$HOME/.factorialrc" ]] && source "$HOME/.factorialrc"
+
+# Tool hooks
+if command -v mise &>/dev/null; then
+  eval "$(mise activate zsh)"
+fi
+if command -v direnv &>/dev/null; then
+  eval "$(direnv hook zsh)"
+fi
+
+# Monolith Ruby gems (mise Ruby 3.3.x + user gem dir)
+export GEM_HOME="$HOME/.local/share/gem/ruby/3.3.0"
+export GEM_PATH="$GEM_HOME:$HOME/.local/share/mise/installs/ruby/3.3.5/lib/ruby/gems/3.3.0"
+export PATH="$GEM_HOME/bin:$PATH"
+
+# Docker: switch between Colima and Docker Desktop
+function use-colima() {
+  echo "Stopping Docker Desktop..."
+  docker desktop stop 2>/dev/null
+
+  echo "Starting Colima..."
+  colima start
+
+  echo "Switching context to Colima..."
+  docker context use colima
+
+  echo "Done. Docker is now running on Colima."
+}
+
+function use-desktop() {
+  echo "Stopping Colima..."
+  colima stop
+
+  echo "Starting Docker Desktop..."
+  open -a "Docker"
+
+  echo "Switching context to Desktop..."
+  docker context use desktop-linux
+
+  echo "Done. Docker is now running on Docker Desktop."
+}
+
+# Factorial local dev (clone factorial-dev into ~/code first)
+alias fdev="$HOME/code/factorial-dev/factorial-dev"

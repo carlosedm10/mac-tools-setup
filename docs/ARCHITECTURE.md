@@ -138,14 +138,16 @@ mac-tools-setup/
 │   ├── apps_catalog.sh
 │   ├── settings.sh
 │   └── github_ssh.sh
+├── config/
+│   ├── ghostty/         # bundled config + themes/ayu → ~/.config/ghostty
+│   └── zsh/
+│       └── zshrc        # bundled shell config → ~/.zshrc (dev-deps)
 ├── steps/
 │   ├── homebrew.sh      # internal (dev-deps)
 │   ├── dev_tools.sh     # internal (dev-deps)
 │   ├── direnv.sh        # internal (dev-deps)
 │   ├── ghostty.sh       # internal (dev-deps, apps-coding)
 │   ├── dev_deps.sh
-├── config/
-│   └── ghostty/         # bundled config + themes/ayu → ~/.config/ghostty
 │   ├── apps.sh
 │   ├── ide.sh
 │   ├── skills.sh

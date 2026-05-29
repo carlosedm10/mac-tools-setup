@@ -30,49 +30,18 @@ step_dev_tools_run() {
     success "Saved a copy of .zshrc to ~/Downloads/zshrc_copy.txt"
   fi
 
+  local repo_root zsh_src
+  repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+  zsh_src="$repo_root/config/zsh/zshrc"
+
+  if [[ ! -f "$zsh_src" ]]; then
+    error "Missing bundled .zshrc template under $zsh_src"
+    return 1
+  fi
+
   backup_file "$HOME/.zshrc"
-  info "Writing new .zshrc configuration..."
-  cat > "$HOME/.zshrc" << 'EOF'
-# Path to Oh My Zsh
-export ZSH="$HOME/.oh-my-zsh"
-export PATH="/opt/homebrew/bin:$PATH"
-
-ZSH_THEME="robbyrussell"
-
-zstyle ':omz:update' mode auto
-zstyle ':omz:update' frequency 7
-
-ENABLE_CORRECTION="true"
-COMPLETION_WAITING_DOTS="true"
-
-plugins=(git zsh-autosuggestions zsh-syntax-highlighting)
-
-source $ZSH/oh-my-zsh.sh
-
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
-
-export BUN_INSTALL="$HOME/.bun"
-export PATH="$BUN_INSTALL/bin:$PATH"
-
-export PATH="$PATH:$HOME/go/bin"
-
-export PATH="/opt/homebrew/opt/ruby/bin:$PATH"
-# RubyGems executables (e.g. rails, bundler) for Homebrew Ruby 4.x
-export PATH="/opt/homebrew/lib/ruby/gems/4.0.0/bin:$PATH"
-
-# Docker CLI completions
-fpath=("$HOME/.docker/completions" $fpath)
-autoload -Uz compinit
-compinit
-
-# Terminal keybinds (Ghostty / other emulators)
-bindkey "^[b" backward-word
-bindkey "^[f" forward-word
-bindkey "^[^?" backward-kill-word
-bindkey "^U" kill-whole-line
-EOF
+  info "Writing new .zshrc from $zsh_src..."
+  cp "$zsh_src" "$HOME/.zshrc"
   success ".zshrc written."
 
   if [[ ! -d "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions" ]]; then
@@ -83,8 +52,8 @@ EOF
     git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting"
   fi
 
-  info "Installing core packages: git, wget, curl, openssl, pnpm, htop, jq, git-lfs, pipx, poetry, direnv..."
-  brew install git wget curl openssl pnpm htop jq git-lfs pipx poetry direnv
+  info "Installing core packages: git, wget, curl, openssl, pnpm, htop, jq, git-lfs, pipx, poetry, direnv, mise..."
+  brew install git wget curl openssl pnpm htop jq git-lfs pipx poetry direnv mise
 
   info "Installing Node.js (includes npm + npx)..."
   brew install node
