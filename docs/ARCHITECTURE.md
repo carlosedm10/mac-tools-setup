@@ -14,12 +14,12 @@ This repo is a thin orchestration layer for macOS machine setup. Each setup phas
     │                 │
 ┌───▼──────────┐  ┌───▼──────────────────────────────────────────┐
 │  lib/        │  │  steps/                                       │
-│  deps.sh     │  │  dev_deps.sh  → homebrew + dev_tools + direnv │
+│  deps.sh     │  │  dev_deps.sh  → homebrew + colima + dev_tools + direnv │
 │  ui.sh       │  │  apps.sh      → GUI casks by category         │
 │  helpers.sh  │  │  ide.sh       → Cursor + extensions           │
 │  settings.sh │  │  github.sh    → git config + SSH              │
 │  apps_catalog│  │  skills.sh    → agent-skills-template (bunx)  │
-│  github_ssh.sh│ │  (homebrew, dev_tools, direnv, ghostty — int.) │
+│  github_ssh.sh│ │  (homebrew, colima, dev_tools, direnv, ghostty) │
 └──────────────┘  └──────────────────────────────────────────────┘
 ```
 
@@ -79,7 +79,7 @@ Execution order (always preserved):
 
 | Step | Module | Key mechanism |
 |------|--------|---------------|
-| `dev-deps` | `steps/dev_deps.sh` | Chains homebrew, dev_tools, direnv, ghostty config |
+| `dev-deps` | `steps/dev_deps.sh` | Chains homebrew, colima config, dev_tools, direnv, ghostty config |
 | `apps-*` | `steps/apps.sh` | Casks + optional formulae per category; coding syncs Ghostty config |
 | `ide` | `steps/ide.sh` | Cursor cask + `cursor --install-extension` |
 | `skills` | `steps/skills.sh` | `bunx agent-skills-template@latest install -y` (gum platform picker) |
@@ -139,11 +139,13 @@ mac-tools-setup/
 │   ├── settings.sh
 │   └── github_ssh.sh
 ├── config/
+│   ├── colima/          # bundled colima.yaml → ~/.colima/default/colima.yaml
 │   ├── ghostty/         # bundled config + themes/ayu → ~/.config/ghostty
 │   └── zsh/
 │       └── zshrc        # bundled shell config → ~/.zshrc (dev-deps)
 ├── steps/
 │   ├── homebrew.sh      # internal (dev-deps)
+│   ├── colima.sh        # internal (dev-deps)
 │   ├── dev_tools.sh     # internal (dev-deps)
 │   ├── direnv.sh        # internal (dev-deps)
 │   ├── ghostty.sh       # internal (dev-deps, apps-coding)
