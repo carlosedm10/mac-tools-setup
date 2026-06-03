@@ -52,8 +52,11 @@ step_dev_tools_run() {
     git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting"
   fi
 
-  info "Installing core packages: git, wget, curl, openssl, pnpm, htop, jq, git-lfs, pipx, poetry, direnv, mise..."
-  brew install git wget curl openssl pnpm htop jq git-lfs pipx poetry direnv mise
+  info "Installing core packages: git, wget, curl, openssl@3, pnpm, htop, jq, git-lfs, pipx, poetry, direnv, mise..."
+  brew install git wget curl openssl@3 pnpm htop jq git-lfs pipx poetry direnv mise
+
+  info "Ensuring asdf is not installed (use mise only)..."
+  brew uninstall --quiet asdf 2>/dev/null || true
 
   info "Installing Node.js (includes npm + npx)..."
   brew install node
