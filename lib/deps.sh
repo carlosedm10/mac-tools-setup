@@ -6,6 +6,10 @@
 # ============================================================================
 
 brew_shellenv() {
+  # Non-interactive installs: auto-confirm dependent upgrades (e.g. staticcheck).
+  export HOMEBREW_NO_ASK=1
+  export HOMEBREW_NO_ENV_HINTS=1
+
   if [[ -x /opt/homebrew/bin/brew ]]; then
     # shellcheck disable=SC1091
     eval "$(/opt/homebrew/bin/brew shellenv)"

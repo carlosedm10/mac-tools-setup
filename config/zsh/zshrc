@@ -2,6 +2,10 @@
 export ZSH="$HOME/.oh-my-zsh"
 export PATH="/opt/homebrew/bin:$PATH"
 
+# Homebrew: auto-confirm dependent upgrades during install/upgrade
+export HOMEBREW_NO_ASK=1
+export HOMEBREW_NO_ENV_HINTS=1
+
 ZSH_THEME="robbyrussell"
 
 zstyle ':omz:update' mode auto
