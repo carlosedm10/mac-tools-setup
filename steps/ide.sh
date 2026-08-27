@@ -1,74 +1,111 @@
 #!/usr/bin/env bash
 # IDE: Cursor app + extensions
+#
+# Extension list = personal stack (Python, data, infra, remote-ssh, AI, frontend).
+
+_CURSOR_APP="/Applications/Cursor.app"
+_CURSOR_CLI_BUNDLED="$_CURSOR_APP/Contents/Resources/app/bin/cursor"
+
+# Resolve the Cursor CLI: PATH first, then the binary bundled inside Cursor.app.
+_cursor_cli() {
+  if command -v cursor &>/dev/null; then
+    command -v cursor
+    return 0
+  fi
+  if [[ -x "$_CURSOR_CLI_BUNDLED" ]]; then
+    echo "$_CURSOR_CLI_BUNDLED"
+    return 0
+  fi
+  return 1
+}
+
+_IDE_EXTENSIONS=(
+  # --- Python ---
+  ms-python.python
+  ms-python.debugpy
+  ms-python.vscode-pylance
+  charliermarsh.ruff
+  ms-toolsai.jupyter
+  ms-toolsai.jupyter-renderers
+  ms-toolsai.jupyter-cell-tags
+  ms-toolsai.jupyter-slideshow
+  # --- Data ---
+  dorzey.vscode-sqlfluff
+  mtxr.sqltools
+  mechatroner.rainbow-csv
+  dotjoshjohnson.xml
+  redhat.vscode-yaml
+  samuelcolvin.jinjahtml
+  lucien-martijn.parquet-visualizer
+  # --- Productivity ---
+  wayou.vscode-todo-highlight
+  cweijan.vscode-office
+  vscode-icons-team.vscode-icons
+  streetsidesoftware.code-spell-checker
+  alefragnani.project-manager
+  Malo.copy-json-path
+  # --- Infra ---
+  mikestead.dotenv
+  foxundermoon.shell-format
+  ms-vscode.makefile-tools
+  tamasfe.even-better-toml
+  hashicorp.terraform
+  ms-vscode-remote.remote-ssh
+  ms-vscode-remote.remote-ssh-edit
+  ms-vscode-remote.remote-explorer
+  # --- GitHub ---
+  github.vscode-github-actions
+  eamodio.gitlens
+  donjayamanne.githistory
+  # --- AI assistants ---
+  sourcegraph.cody-ai
+  github.copilot
+  github.copilot-chat
+  google.geminicodeassist
+  # --- Frontend ---
+  batisteo.vscode-django
+  bradlc.vscode-tailwindcss
+  Vue.volar
+  kamikillerto.vscode-colorize
+)
+
+_install_extensions_for() {
+  local cli="$1"
+  local ext
+  info "Installing extensions via $cli..."
+  for ext in "${_IDE_EXTENSIONS[@]}"; do
+    if [[ "$DRY_RUN" == "true" ]]; then
+      warn "[dry-run] $cli --install-extension $ext"
+    elif ! "$cli" --install-extension "$ext" &>/dev/null; then
+      warn "Failed to install '$ext' (continuing)."
+    fi
+  done
+}
 
 step_ide_run() {
   info "IDE (Cursor)"
 
-  info "Installing Cursor..."
-  if [[ "$DRY_RUN" == "true" ]]; then
+  if [[ -d "$_CURSOR_APP" ]]; then
+    info "Cursor already installed at $_CURSOR_APP"
+  elif [[ "$DRY_RUN" == "true" ]]; then
     warn "[dry-run] brew install --cask cursor"
   else
+    info "Installing Cursor..."
     brew install --cask cursor || warn "Failed to install Cursor cask"
   fi
 
-  if ! command -v cursor &>/dev/null; then
-    warn "Cursor CLI not found. Skipping extension installation."
-    warn "Open Cursor once, then re-run the IDE step to install extensions."
+  local cursor_cli=""
+  if [[ "$DRY_RUN" == "true" ]]; then
+    cursor_cli="cursor"
+  elif cursor_cli=$(_cursor_cli); then
+    :
+  else
+    warn "Cursor CLI not found — install Cursor, or run 'Shell Command: Install cursor command in PATH' from the Command Palette."
+    warn "Skipped extension installation."
+    success "IDE setup finished."
     return 0
   fi
 
-  info "Installing recommended Cursor extensions..."
-
-  _install_ext() {
-    local ext="$1"
-    if [[ "$DRY_RUN" == "true" ]]; then
-      warn "[dry-run] cursor --install-extension $ext"
-      return 0
-    fi
-    if ! cursor --install-extension "$ext"; then
-      warn "Failed to install extension '$ext' (continuing)."
-    fi
-  }
-
-  _install_ext ms-python.python
-  _install_ext ms-python.debugpy
-  _install_ext ms-python.vscode-pylance
-  _install_ext charliermarsh.ruff
-  _install_ext ms-toolsai.jupyter
-  _install_ext ms-toolsai.jupyter-renderers
-  _install_ext ms-toolsai.jupyter-cell-tags
-  _install_ext ms-toolsai.jupyter-slideshow
-  _install_ext dorzey.vscode-sqlfluff
-  _install_ext mtxr.sqltools
-  _install_ext mechatroner.rainbow-csv
-  _install_ext dotjoshjohnson.xml
-  _install_ext redhat.vscode-yaml
-  _install_ext samuelcolvin.jinjahtml
-  _install_ext lucien-martijn.parquet-visualizer
-  _install_ext wayou.vscode-todo-highlight
-  _install_ext cweijan.vscode-office
-  _install_ext vscode-icons-team.vscode-icons
-  _install_ext streetsidesoftware.code-spell-checker
-  _install_ext alefragnani.project-manager
-  _install_ext Malo.copy-json-path
-  _install_ext mikestead.dotenv
-  _install_ext foxundermoon.shell-format
-  _install_ext ms-vscode.makefile-tools
-  _install_ext tamasfe.even-better-toml
-  _install_ext hashicorp.terraform
-  _install_ext ms-vscode-remote.remote-ssh
-  _install_ext ms-vscode-remote.remote-ssh-edit
-  _install_ext ms-vscode-remote.remote-explorer
-  _install_ext github.vscode-github-actions
-  _install_ext eamodio.gitlens
-  _install_ext donjayamanne.githistory
-  _install_ext sourcegraph.cody-ai
-  _install_ext github.copilot
-  _install_ext google.geminicodeassist
-  _install_ext batisteo.vscode-django
-  _install_ext bradlc.vscode-tailwindcss
-  _install_ext Vue.volar
-  _install_ext kamikillerto.vscode-colorize
-
+  _install_extensions_for "$cursor_cli"
   success "IDE setup finished (some extensions may have failed; see warnings above)."
 }
