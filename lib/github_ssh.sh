@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# GitHub SSH key generation, agent setup, ~/.ssh/config, and connectivity test.
+# GitHub SSH key generation, agent setup, ~/.ssh/config, connectivity test, and gh CLI login.
 
 github_ssh_test() {
   local ssh_output
@@ -103,5 +103,33 @@ EOF
     warn "SSH test failed. Output:"
     echo "$ssh_output"
     warn "Check your key and try again: ssh -T git@github.com"
+  fi
+}
+
+# setup_github_cli [true|false]
+# Logs the GitHub CLI in over SSH via the browser, unless already authenticated.
+setup_github_cli() {
+  local dry_run="${1:-false}"
+
+  if ! command -v gh &>/dev/null; then
+    warn "gh not found; run the Dev deps step first, then: gh auth login"
+    return 0
+  fi
+
+  if gh auth status &>/dev/null; then
+    success "GitHub CLI already authenticated."
+    return 0
+  fi
+
+  if [[ "$dry_run" == "true" ]]; then
+    warn "[dry-run] gh auth login --hostname github.com --git-protocol ssh --skip-ssh-key --web"
+    return 0
+  fi
+
+  info "Logging in to the GitHub CLI (a browser window will open)..."
+  if gh auth login --hostname github.com --git-protocol ssh --skip-ssh-key --web; then
+    success "GitHub CLI authenticated."
+  else
+    warn "gh auth login failed; run it manually: gh auth login"
   fi
 }

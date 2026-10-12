@@ -35,7 +35,7 @@ This repo is a thin orchestration layer for macOS machine setup. Each setup phas
 |-------|-------------|
 | **All** | Every tracked step |
 | **Dev deps** | `dev-deps` (Homebrew, Xcode CLT, Oh My Zsh, languages, direnv) |
-| **GitHub** | `github` (Git config + SSH) |
+| **GitHub** | `github` (Git config + SSH + `gh auth login`) |
 | **Apps** | Second gum picker → one or more app categories |
 | **IDE** | `ide` (Cursor cask + extensions) |
 | **Agent skills** | `skills` (`bunx agent-skills-template` install; runs last) |

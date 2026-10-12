@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Git config + GitHub SSH
+# Git config + GitHub SSH + gh CLI login
 
 step_github_run() {
   info "GitHub"
@@ -36,4 +36,5 @@ step_github_run() {
   fi
 
   setup_github_ssh "$DRY_RUN"
+  setup_github_cli "$DRY_RUN"
 }
