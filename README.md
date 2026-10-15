@@ -31,7 +31,7 @@ Setup is split into modular steps orchestrated by `install`, with shared librari
 - Xcode Command Line Tools
 - Oh My Zsh + zsh plugins
 - Python, UV, Bun, Go, Ollama, Ruby/Rails, Node (Homebrew + nvm LTS)
-- Brew packages: `git`, `wget`, `curl`, `openssl`, `pnpm`, `htop`, `jq`, `git-lfs`, `pipx`, `poetry`, `direnv`, `mise`
+- Brew packages: `git`, `wget`, `curl`, `openssl`, `pnpm`, `htop`, `jq`, `git-lfs`, `pipx`, `poetry`, `direnv`, `mise`, `gh`
 - Docker via Colima: `colima`, `docker`, `docker-compose` (installs bundled `colima.yaml` — 4 CPU, 8 GiB RAM, `vz` + `virtiofs` — then starts Colima on first run)
 
 ### Apps (pick categories in the installer)
@@ -58,6 +58,7 @@ Setup is split into modular steps orchestrated by `install`, with shared librari
 
 - Global Git name/email
 - SSH key for GitHub + `~/.ssh/config` entry
+- GitHub CLI login (`gh auth login` over SSH, via browser) if not already authenticated
 
 > Note: Full **Xcode** (the IDE) must be installed separately from the Mac App Store. The script only handles the Command Line Tools.
 

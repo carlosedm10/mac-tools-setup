@@ -1,6 +1,26 @@
 #!/usr/bin/env bash
 # Xcode CLT, Oh My Zsh, .zshrc, brew formulae, nvm, etc.
 
+# Homebrew's docker-compose is only reachable as `docker compose` once the
+# Docker CLI is told about Homebrew's plugin dir (Docker Desktop did this for us).
+register_compose_plugin() {
+  local cfg="$HOME/.docker/config.json"
+  local dir
+  dir="$(brew --prefix)/lib/docker/cli-plugins"
+  mkdir -p "$HOME/.docker"
+  [[ -s "$cfg" ]] || echo '{}' >"$cfg"
+
+  local tmp
+  tmp="$(mktemp)"
+  if jq --arg d "$dir" '.cliPluginsExtraDirs = ((.cliPluginsExtraDirs // []) + [$d] | unique)' "$cfg" >"$tmp"; then
+    mv "$tmp" "$cfg"
+    success "Registered Compose plugin dir in $cfg."
+  else
+    rm -f "$tmp"
+    warn "Could not update $cfg; add \"cliPluginsExtraDirs\": [\"$dir\"] manually."
+  fi
+}
+
 step_dev_tools_run() {
   info "Developer Tools & Terminal Dependencies"
 
@@ -52,8 +72,8 @@ step_dev_tools_run() {
     git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting"
   fi
 
-  info "Installing core packages: git, wget, curl, openssl@3, pnpm, htop, jq, git-lfs, pipx, poetry, direnv, mise..."
-  brew install git wget curl openssl@3 pnpm htop jq git-lfs pipx poetry direnv mise
+  info "Installing core packages: git, wget, curl, openssl@3, pnpm, htop, jq, git-lfs, pipx, poetry, direnv, mise, gh..."
+  brew install git wget curl openssl@3 pnpm htop jq git-lfs pipx poetry direnv mise gh
 
   info "Ensuring asdf is not installed (use mise only)..."
   brew uninstall --quiet asdf 2>/dev/null || true
@@ -104,6 +124,7 @@ step_dev_tools_run() {
 
   info "Installing Docker via Colima (CLI + Compose)..."
   brew install colima docker docker-compose
+  register_compose_plugin
 
   if command -v colima &>/dev/null; then
     if ! colima status &>/dev/null; then
