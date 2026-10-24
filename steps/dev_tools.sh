@@ -122,6 +122,9 @@ step_dev_tools_run() {
   info "Installing Go (compiler) and tooling: golangci-lint, delve, staticcheck, gopls..."
   brew install go golangci-lint delve staticcheck gopls
 
+  info "Installing cargo-audit (RustSec advisories for Cargo.lock)..."
+  brew install cargo-audit
+
   info "Installing Docker via Colima (CLI + Compose)..."
   brew install colima docker docker-compose
   register_compose_plugin
